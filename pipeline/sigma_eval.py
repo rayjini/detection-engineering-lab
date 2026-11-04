@@ -78,8 +78,8 @@ def _eval(node: Any, event: Mapping[str, Any]) -> bool:
     if isinstance(node, ConditionFieldEqualsValueExpression):
         return _field_matches(event, node.field, node.value)
     if isinstance(node, ConditionValueExpression):
-        # Keyword search: value may appear in any field.
-        return any(_value_matches(v, node.value, event) for v in _iter_values(event))
+        # Keyword search is full-text: the value may appear anywhere in any field.
+        return any(_keyword_matches(v, node.value, event) for v in _iter_values(event))
     if isinstance(node, (ConditionIdentifier, ConditionSelector)):
         # Normally resolved away by pySigma's parse(); handled defensively.
         return all(_eval(a, event) for a in node.args)
@@ -107,6 +107,14 @@ def _iter_values(event: Mapping[str, Any]):
             yield from val
         else:
             yield val
+
+
+def _keyword_matches(actual: Any, expected: Any, event: Mapping[str, Any]) -> bool:
+    if isinstance(expected, SigmaExpansion):
+        return any(_keyword_matches(actual, v, event) for v in expected.values)
+    if isinstance(expected, SigmaString):
+        return _string_regex(expected).search(_to_str(actual)) is not None
+    return _value_matches(actual, expected, event)
 
 
 def _field_matches(event: Mapping[str, Any], field: str, expected: Any) -> bool:
