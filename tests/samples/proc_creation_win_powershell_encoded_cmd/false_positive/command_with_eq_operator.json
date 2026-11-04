@@ -1,0 +1,12 @@
+{
+  "_comment": "Plain -Command using the -eq comparison operator, which must not be mistaken for -e",
+  "EventID": 1,
+  "UtcTime": "2026-11-03 09:15:31.447",
+  "ProcessId": 4410,
+  "Image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+  "OriginalFileName": "PowerShell.EXE",
+  "CommandLine": "powershell.exe -NoProfile -Command \"Get-Service | Where-Object Status -eq Running\"",
+  "User": "LAB-WIN10\\labuser",
+  "IntegrityLevel": "Medium",
+  "ParentImage": "C:\\Windows\\explorer.exe"
+}

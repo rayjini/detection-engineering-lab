@@ -1,0 +1,12 @@
+{
+  "_comment": "Non-PowerShell binary with a ' -e ' flag - must not fire because the image selection fails",
+  "EventID": 1,
+  "UtcTime": "2026-11-03 10:42:08.003",
+  "ProcessId": 6788,
+  "Image": "C:\\Program Files\\OpenSSL-Win64\\bin\\openssl.exe",
+  "OriginalFileName": "openssl.exe",
+  "CommandLine": "openssl.exe enc -e -aes-256-cbc -in report.txt -out report.enc",
+  "User": "LAB-WIN10\\labuser",
+  "IntegrityLevel": "Medium",
+  "ParentImage": "C:\\Windows\\System32\\cmd.exe"
+}

@@ -1,0 +1,12 @@
+{
+  "_comment": "PowerShell 7 with the full -EncodedCommand parameter name",
+  "EventID": 1,
+  "UtcTime": "2026-11-03 14:05:42.019",
+  "ProcessId": 7340,
+  "Image": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+  "OriginalFileName": "pwsh.dll",
+  "CommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" -EncodedCommand UwB0AGEAcgB0AC0AUAByAG8AYwBlAHMAcwAgAGMAYQBsAGMALgBlAHgAZQA=",
+  "User": "LAB-WIN10\\labuser",
+  "IntegrityLevel": "High",
+  "ParentImage": "C:\\Windows\\explorer.exe"
+}

@@ -1,0 +1,42 @@
+title: PowerShell Encoded Command Execution
+id: 038e9341-8d6f-416c-acc9-cd2400d244d6
+status: experimental
+description: |
+    Detects PowerShell started with the -EncodedCommand parameter or one of its
+    abbreviations (-e, -en, -enc, -ec, ...). Attackers base64-encode commands to
+    hide what the payload does from command-line logging and simple string matching.
+    Also catches renamed PowerShell binaries through the PE OriginalFileName.
+references:
+    - https://attack.mitre.org/techniques/T1059/001/
+    - https://attack.mitre.org/techniques/T1027/010/
+    - https://github.com/redcanaryco/atomic-red-team/blob/master/atomics/T1059.001/T1059.001.md
+author: rayjini
+date: 2026-11-03
+tags:
+    - attack.execution
+    - attack.t1059.001
+    - attack.defense-evasion
+    - attack.t1027.010
+logsource:
+    category: process_creation
+    product: windows
+detection:
+    selection_img:
+        - Image|endswith:
+              - '\powershell.exe'
+              - '\pwsh.exe'
+        - OriginalFileName:
+              - 'PowerShell.EXE'
+              - 'pwsh.dll'
+    selection_cli:
+        # windash also matches /enc and Unicode dash variants used for evasion
+        CommandLine|windash|contains:
+            - ' -e '
+            - ' -en '
+            - ' -enc '
+            - ' -enco'
+            - ' -ec '
+    condition: all of selection_*
+falsepositives:
+    - Management and deployment tooling (e.g. SCCM, Intune scripts, some installers) that passes encoded commands
+level: high
