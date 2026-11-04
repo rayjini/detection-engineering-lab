@@ -1,0 +1,12 @@
+{
+  "_comment": "Renamed powershell.exe copied to a fake name - caught only via OriginalFileName",
+  "EventID": 1,
+  "UtcTime": "2026-11-03 14:09:03.554",
+  "ProcessId": 2208,
+  "Image": "C:\\Users\\Public\\svchost.exe",
+  "OriginalFileName": "PowerShell.EXE",
+  "CommandLine": "svchost.exe -ec UwB0AGEAcgB0AC0AUAByAG8AYwBlAHMAcwAgAGMAYQBsAGMALgBlAHgAZQA=",
+  "User": "LAB-WIN10\\labuser",
+  "IntegrityLevel": "Medium",
+  "ParentImage": "C:\\Windows\\System32\\wscript.exe"
+}

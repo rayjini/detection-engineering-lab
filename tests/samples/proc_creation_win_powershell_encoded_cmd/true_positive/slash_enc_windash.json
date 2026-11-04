@@ -1,0 +1,12 @@
+{
+  "_comment": "Forward-slash parameter prefix (/enc) used to evade rules that only look for '-enc'",
+  "EventID": 1,
+  "UtcTime": "2026-11-03 14:11:27.902",
+  "ProcessId": 5012,
+  "Image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+  "OriginalFileName": "PowerShell.EXE",
+  "CommandLine": "powershell.exe /enc VwByAGkAdABlAC0ASABvAHMAdAAgACIASABlAGwAbABvACAAZgByAG8AbQAgAEEAdABvAG0AaQBjACAAUgBlAGQAIABUAGUAYQBtACAAVAAxADAANQA5AC4AMAAwADEAIgA=",
+  "User": "LAB-WIN10\\labuser",
+  "IntegrityLevel": "Medium",
+  "ParentImage": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE"
+}

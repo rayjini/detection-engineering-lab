@@ -1,0 +1,12 @@
+{
+  "_comment": "Normal admin script run via -File with -ExecutionPolicy (starts with -e but is not -enc)",
+  "EventID": 1,
+  "UtcTime": "2026-11-03 09:00:00.120",
+  "ProcessId": 3320,
+  "Image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+  "OriginalFileName": "PowerShell.EXE",
+  "CommandLine": "powershell.exe -ExecutionPolicy Bypass -File C:\\scripts\\backup.ps1",
+  "User": "NT AUTHORITY\\SYSTEM",
+  "IntegrityLevel": "System",
+  "ParentImage": "C:\\Windows\\System32\\svchost.exe"
+}
