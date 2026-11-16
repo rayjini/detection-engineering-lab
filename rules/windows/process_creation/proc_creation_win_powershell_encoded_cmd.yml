@@ -15,7 +15,7 @@ date: 2026-11-03
 tags:
     - attack.execution
     - attack.t1059.001
-    - attack.defense-evasion
+    - attack.stealth
     - attack.t1027.010
 logsource:
     category: process_creation

@@ -54,6 +54,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--rules", type=Path, default=RULES_DIR)
     ap.add_argument("--out", type=Path, default=REPO_ROOT / "output")
     args = ap.parse_args(argv)
+    args.out = args.out.resolve()
+    # windash expands to Unicode dashes; don't crash on a cp1252 Windows console
+    sys.stdout.reconfigure(errors="backslashreplace")
 
     out_dir = args.out / args.target
     out_dir.mkdir(parents=True, exist_ok=True)

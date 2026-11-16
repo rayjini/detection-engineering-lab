@@ -1,0 +1,61 @@
+name: Detection pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint & validate rules
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: YAML lint
+        run: yamllint rules/ .github/
+      - name: Sigma validation
+        run: sigma check --fail-on-error --fail-on-issues rules/
+
+  test:
+    name: Test rules against sample logs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: pytest
+
+  convert:
+    name: Convert to Elastic (pySigma)
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Lucene queries
+        run: python -m pipeline.convert --target lucene
+      - name: EQL queries
+        run: python -m pipeline.convert --target eql
+      - name: Kibana detection rules (NDJSON)
+        run: python -m pipeline.convert --target lucene --format siem_rule_ndjson --out output/kibana
+      - uses: actions/upload-artifact@v4
+        with:
+          name: elastic-rules
+          path: output/
+          if-no-files-found: error
