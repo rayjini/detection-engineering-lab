@@ -24,12 +24,26 @@ GitHub repo (Sigma rules, MITRE ATT&CK mapped)
 | `lab/atomic-red-team/` | Atomic test notes and execution logs |
 | `docs/` | Lab setup guides and write-ups |
 
+## Running locally
+
+```bash
+python -m venv .venv && .venv/Scripts/activate   # or: source .venv/bin/activate
+pip install -r requirements.txt
+yamllint rules/ .github/
+sigma check --fail-on-issues rules/
+pytest
+python -m pipeline.convert --format siem_rule_ndjson   # -> output/lucene/rules.ndjson
+```
+
+CI (`.github/workflows/detection-pipeline.yml`) runs the same steps on every push
+and pull request, and publishes the converted Elastic rules as a build artifact.
+
 ## Status
 
 - [ ] Lab: Windows VM + Sysmon
 - [ ] SIEM ingestion
 - [ ] Atomic Red Team setup
-- [ ] Sigma rules + ATT&CK mapping
-- [ ] CI: lint & validate
-- [ ] CI: test against sample logs
-- [ ] CI: pySigma conversion
+- [x] Sigma rules + ATT&CK mapping
+- [x] CI: lint & validate
+- [x] CI: test against sample logs
+- [x] CI: pySigma conversion

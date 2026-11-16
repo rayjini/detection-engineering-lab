@@ -32,9 +32,11 @@ SAMPLES_DIR = REPO_ROOT / "tests" / "samples"
 RULE_FILES = rule_files()
 
 ATTACK_TECHNIQUE = re.compile(r"^t\d{4}(\.\d{3})?$")
+# Current ATT&CK (as bundled with pySigma) renamed Defense Evasion (TA0005) to Stealth
+# and added Defense Impairment (TA0112); keep in sync with `sigma check`.
 ATTACK_TACTICS = {
     "reconnaissance", "resource-development", "initial-access", "execution",
-    "persistence", "privilege-escalation", "defense-evasion", "credential-access",
+    "persistence", "privilege-escalation", "stealth", "defense-impairment", "credential-access",
     "discovery", "lateral-movement", "collection", "command-and-control",
     "exfiltration", "impact",
 }
