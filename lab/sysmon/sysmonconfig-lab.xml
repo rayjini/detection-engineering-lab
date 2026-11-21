@@ -1,0 +1,203 @@
+<!--
+  Sysmon configuration for the detection-engineering lab VM.
+
+  Philosophy: a single, disposable lab box, so log broadly where volume is low
+  (process creation, remote threads, WMI, drivers) and filter only the
+  high-volume event types (network, image load, file, registry, DNS) down to
+  what the lab's rules and Atomic Red Team tests need.
+
+  Event types written as onmatch="exclude" with no rules  -> log EVERYTHING
+  Event types written as onmatch="include" with no rules  -> log NOTHING
+
+  Install / update:  .\lab\sysmon\Install-Sysmon.ps1
+  Verify loaded:     Sysmon64.exe -c
+-->
+<Sysmon schemaversion="4.90">
+  <HashAlgorithms>SHA256,IMPHASH</HashAlgorithms>
+  <CheckRevocation>False</CheckRevocation>
+  <DnsLookup>False</DnsLookup>
+
+  <EventFiltering>
+
+    <!-- 1: ProcessCreate - everything. Core telemetry for process_creation Sigma rules. -->
+    <RuleGroup name="" groupRelation="or">
+      <ProcessCreate onmatch="exclude"/>
+    </RuleGroup>
+
+    <!-- 2: FileCreateTime (timestomping) - off, noisy from installers -->
+    <RuleGroup name="" groupRelation="or">
+      <FileCreateTime onmatch="include"/>
+    </RuleGroup>
+
+    <!-- 3: NetworkConnect - only LOLBins and script hosts making outbound connections -->
+    <RuleGroup name="" groupRelation="or">
+      <NetworkConnect onmatch="include">
+        <Image condition="end with">\powershell.exe</Image>
+        <Image condition="end with">\pwsh.exe</Image>
+        <Image condition="end with">\cmd.exe</Image>
+        <Image condition="end with">\rundll32.exe</Image>
+        <Image condition="end with">\regsvr32.exe</Image>
+        <Image condition="end with">\mshta.exe</Image>
+        <Image condition="end with">\certutil.exe</Image>
+        <Image condition="end with">\bitsadmin.exe</Image>
+        <Image condition="end with">\wscript.exe</Image>
+        <Image condition="end with">\cscript.exe</Image>
+        <Image condition="end with">\msbuild.exe</Image>
+        <Image condition="end with">\installutil.exe</Image>
+        <Image condition="begin with">C:\Users\</Image>
+        <Image condition="begin with">C:\ProgramData\</Image>
+        <Image condition="begin with">C:\AtomicRedTeam\</Image>
+        <DestinationPort condition="is">4444</DestinationPort>
+      </NetworkConnect>
+    </RuleGroup>
+
+    <!-- 5: ProcessTerminate - off -->
+    <RuleGroup name="" groupRelation="or">
+      <ProcessTerminate onmatch="include"/>
+    </RuleGroup>
+
+    <!-- 6: DriverLoad - everything (rare) -->
+    <RuleGroup name="" groupRelation="or">
+      <DriverLoad onmatch="exclude"/>
+    </RuleGroup>
+
+    <!-- 7: ImageLoad - only DLLs that signal PowerShell-in-memory or credential access -->
+    <RuleGroup name="" groupRelation="or">
+      <ImageLoad onmatch="include">
+        <ImageLoaded condition="end with">\System.Management.Automation.dll</ImageLoaded>
+        <ImageLoaded condition="end with">\System.Management.Automation.ni.dll</ImageLoaded>
+        <ImageLoaded condition="end with">\dbghelp.dll</ImageLoaded>
+        <ImageLoaded condition="end with">\dbgcore.dll</ImageLoaded>
+        <ImageLoaded condition="end with">\samlib.dll</ImageLoaded>
+        <ImageLoaded condition="end with">\vaultcli.dll</ImageLoaded>
+        <ImageLoaded condition="end with">\comsvcs.dll</ImageLoaded>
+      </ImageLoad>
+    </RuleGroup>
+
+    <!-- 8: CreateRemoteThread - everything (injection) -->
+    <RuleGroup name="" groupRelation="or">
+      <CreateRemoteThread onmatch="exclude"/>
+    </RuleGroup>
+
+    <!-- 9: RawAccessRead - everything (NTDS / SAM theft via raw disk reads) -->
+    <RuleGroup name="" groupRelation="or">
+      <RawAccessRead onmatch="exclude"/>
+    </RuleGroup>
+
+    <!-- 10: ProcessAccess - handles opened to LSASS (T1003.001), minus Defender scanning -->
+    <RuleGroup name="" groupRelation="or">
+      <ProcessAccess onmatch="include">
+        <TargetImage condition="end with">\lsass.exe</TargetImage>
+      </ProcessAccess>
+    </RuleGroup>
+    <RuleGroup name="" groupRelation="and">
+      <ProcessAccess onmatch="exclude">
+        <SourceImage condition="begin with">C:\ProgramData\Microsoft\Windows Defender\Platform\</SourceImage>
+        <SourceImage condition="end with">\MsMpEng.exe</SourceImage>
+      </ProcessAccess>
+    </RuleGroup>
+
+    <!-- 11: FileCreate - persistence locations and script / payload drops -->
+    <RuleGroup name="" groupRelation="or">
+      <FileCreate onmatch="include">
+        <TargetFilename condition="contains">\Start Menu\Programs\Startup\</TargetFilename>
+        <TargetFilename condition="begin with">C:\Windows\System32\Tasks\</TargetFilename>
+        <TargetFilename condition="begin with">C:\Windows\Tasks\</TargetFilename>
+        <TargetFilename condition="contains">\WindowsPowerShell\</TargetFilename>
+        <TargetFilename condition="end with">.ps1</TargetFilename>
+        <TargetFilename condition="end with">.psm1</TargetFilename>
+        <TargetFilename condition="end with">.bat</TargetFilename>
+        <TargetFilename condition="end with">.cmd</TargetFilename>
+        <TargetFilename condition="end with">.vbs</TargetFilename>
+        <TargetFilename condition="end with">.js</TargetFilename>
+        <TargetFilename condition="end with">.hta</TargetFilename>
+        <TargetFilename condition="end with">.lnk</TargetFilename>
+        <TargetFilename condition="end with">.dmp</TargetFilename>
+        <TargetFilename condition="contains">\AppData\Local\Temp\</TargetFilename>
+      </FileCreate>
+    </RuleGroup>
+
+    <!-- 12/13/14: Registry - autostart extensibility points (T1547, T1546, T1543) -->
+    <RuleGroup name="" groupRelation="or">
+      <RegistryEvent onmatch="include">
+        <TargetObject condition="contains">\CurrentVersion\Run</TargetObject>
+        <TargetObject condition="contains">\CurrentVersion\Policies\Explorer\Run</TargetObject>
+        <TargetObject condition="contains">\CurrentVersion\Winlogon\</TargetObject>
+        <TargetObject condition="contains">\CurrentVersion\Image File Execution Options\</TargetObject>
+        <TargetObject condition="contains">\CurrentControlSet\Services\</TargetObject>
+        <TargetObject condition="contains">\CurrentControlSet\Control\Lsa\</TargetObject>
+        <TargetObject condition="contains">\Environment\UserInitMprLogonScript</TargetObject>
+        <TargetObject condition="contains">\Microsoft\Windows Defender\</TargetObject>
+        <TargetObject condition="contains">\Software\Classes\CLSID\</TargetObject>
+      </RegistryEvent>
+    </RuleGroup>
+
+    <!-- 15: FileCreateStreamHash - Mark-of-the-Web / ADS on downloaded files -->
+    <RuleGroup name="" groupRelation="or">
+      <FileCreateStreamHash onmatch="include">
+        <TargetFilename condition="contains">\Downloads\</TargetFilename>
+        <TargetFilename condition="contains">\AppData\Local\Temp\</TargetFilename>
+      </FileCreateStreamHash>
+    </RuleGroup>
+
+    <!-- 17/18: Named pipes - everything (C2 frameworks, PsExec) -->
+    <RuleGroup name="" groupRelation="or">
+      <PipeEvent onmatch="exclude"/>
+    </RuleGroup>
+
+    <!-- 19/20/21: WMI event subscriptions - everything (T1546.003) -->
+    <RuleGroup name="" groupRelation="or">
+      <WmiEvent onmatch="exclude"/>
+    </RuleGroup>
+
+    <!-- 22: DNS - everything except Microsoft / Windows Update chatter -->
+    <RuleGroup name="" groupRelation="or">
+      <DnsQuery onmatch="exclude">
+        <QueryName condition="end with">.microsoft.com</QueryName>
+        <QueryName condition="end with">.windowsupdate.com</QueryName>
+        <QueryName condition="end with">.msftncsi.com</QueryName>
+        <QueryName condition="end with">.msftconnecttest.com</QueryName>
+        <QueryName condition="end with">.windows.com</QueryName>
+        <QueryName condition="end with">.live.com</QueryName>
+        <QueryName condition="end with">.bing.com</QueryName>
+        <QueryName condition="end with">.office.com</QueryName>
+        <QueryName condition="end with">.delivery.mp.microsoft.com</QueryName>
+        <QueryName condition="is">wpad</QueryName>
+      </DnsQuery>
+    </RuleGroup>
+
+    <!-- 23: FileDelete (archiving) and 24: Clipboard - off -->
+    <RuleGroup name="" groupRelation="or">
+      <FileDelete onmatch="include"/>
+    </RuleGroup>
+    <RuleGroup name="" groupRelation="or">
+      <ClipboardChange onmatch="include"/>
+    </RuleGroup>
+
+    <!-- 25: ProcessTampering - everything (hollowing / herpaderping) -->
+    <RuleGroup name="" groupRelation="or">
+      <ProcessTampering onmatch="exclude"/>
+    </RuleGroup>
+
+    <!-- 26: FileDeleteDetected - script and payload cleanup -->
+    <RuleGroup name="" groupRelation="or">
+      <FileDeleteDetected onmatch="include">
+        <TargetFilename condition="end with">.ps1</TargetFilename>
+        <TargetFilename condition="end with">.bat</TargetFilename>
+        <TargetFilename condition="end with">.exe</TargetFilename>
+        <TargetFilename condition="end with">.dll</TargetFilename>
+        <TargetFilename condition="end with">.dmp</TargetFilename>
+      </FileDeleteDetected>
+    </RuleGroup>
+
+    <!-- 29: FileExecutableDetected - PE files written anywhere under user-writable paths -->
+    <RuleGroup name="" groupRelation="or">
+      <FileExecutableDetected onmatch="include">
+        <TargetFilename condition="begin with">C:\Users\</TargetFilename>
+        <TargetFilename condition="begin with">C:\ProgramData\</TargetFilename>
+        <TargetFilename condition="begin with">C:\Windows\Temp\</TargetFilename>
+      </FileExecutableDetected>
+    </RuleGroup>
+
+  </EventFiltering>
+</Sysmon>
